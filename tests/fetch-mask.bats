@@ -60,8 +60,9 @@ MOCK
   [ "${status}" -eq 0 ]
   grep -qx 'client-id=Iv23testclientid' "${GITHUB_OUTPUT}"
   grep -q  'private-key<<' "${GITHUB_OUTPUT}"
-  grep -qx '-----BEGIN PRIVATE KEY-----' "${GITHUB_OUTPUT}"
-  grep -qx '-----END PRIVATE KEY-----' "${GITHUB_OUTPUT}"
+  # `--` ends option parsing so GNU grep doesn't read the leading dashes as flags.
+  grep -qxF -- '-----BEGIN PRIVATE KEY-----' "${GITHUB_OUTPUT}"
+  grep -qxF -- '-----END PRIVATE KEY-----' "${GITHUB_OUTPUT}"
 }
 
 @test "fails fast when INPUT_APP is unset" {

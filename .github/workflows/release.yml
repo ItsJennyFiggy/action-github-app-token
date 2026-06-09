@@ -8,13 +8,18 @@ on:
 # Calls the shared reusable release workflow. It runs in THIS repo's context
 # (secrets: inherit), mints a scoped GitHub App token from SSM, and drives
 # release-please. `release_type: simple` is used because a composite action has
-# no language package manifest to version — release-please tracks the version in
-# .release-please-manifest.json. Auto-merge of the release PR is gated inside the
-# reusable workflow on the AUTO_MERGE_RELEASE_PR repo variable.
+# no language package manifest to version. Auto-merge of the release PR is gated
+# inside the reusable workflow on the AUTO_MERGE_RELEASE_PR repo variable.
+#
+# `update_major_tag: true` is hardcoded (not var-gated) because this is a
+# consumed action: the floating `v1` tag must move to each release so consumers
+# pinned to `@v1` track the latest patch — exactly like release-workflows itself.
+# (BOOT-21 introduces a TF-managed UPDATE_MAJOR_TAG var for the *distributed*
+# stub; this repo bootstraps its own v1 directly.)
 jobs:
   release:
     uses: ItsJennyFiggy/release-workflows/.github/workflows/release.yml@v1
     with:
       release_type: simple
-      update_major_tag: ${{ vars.UPDATE_MAJOR_TAG == 'true' }}
+      update_major_tag: true
     secrets: inherit

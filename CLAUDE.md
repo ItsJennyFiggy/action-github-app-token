@@ -1,4 +1,4 @@
-# template-composite-action
+# action-github-app-token
 
 @.agents/rules/git_safety.md
 @.agents/rules/dependency_management.md
@@ -18,8 +18,12 @@ Read these before acting on the topic. Do not load preemptively.
 
 ## Repo-specific notes
 
-- This is a **composite/shell** action template — no Node.js, no bundle, no lockfile.
-- Action logic lives in `scripts/`; `action.yml` steps are thin shims that call them.
-- Tests are **bats** (`tests/*.bats`), the Node-free analog of the TS template's vitest suite.
-- CI lints with `shellcheck` (preinstalled on the runner) and runs bats + a `uses: ./`
-  integration test. There is no build/bundle step.
+- **Composite/shell** action — no Node.js, bundle, or lockfile.
+- **Security core:** `scripts/fetch-mask.sh` fetches the App's SSM credentials and masks the PEM
+  **line-by-line** (`::add-mask::` is line-based — masking a whole multi-line PEM only hides the
+  first line). The minted token is never echoed.
+- Tested with **bats** (`tests/fetch-mask.bats`) with the `aws` CLI mocked on `PATH` — no
+  network/SSM in unit tests. The suite regresses the masking incident directly.
+- **No live token-mint integration test** by design (it would hit real SSM and mint a real token).
+- **Precondition:** the caller must run `aws-actions/configure-aws-credentials` (OIDC) before this
+  action; it consumes ambient AWS credentials.

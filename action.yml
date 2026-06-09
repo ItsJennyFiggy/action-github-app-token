@@ -1,23 +1,48 @@
-name: 'Composite GitHub Action Template'
-description: 'A standard template for writing GitHub Actions as composite/shell actions'
+name: 'GitHub App Token (SSM)'
+description: 'Fetch a GitHub App''s SSM-stored credentials, mask the PEM line-by-line, and mint a scoped installation token.'
 author: 'ItsJennyFiggy'
 inputs:
-  who-to-greet:
-    description: 'Who to greet in the log'
+  app:
+    description: 'Logical app slug. Resolves SSM paths /itsjennyfiggy/global/<app>_github_app_client_id and _private_key (e.g. figgy_release, figgy_bot, platform_admin, gitops_writer).'
     required: true
-    default: 'World'
+  repositories:
+    description: 'Optional comma/newline list of repositories to scope the token to. Requires `owner` when set. When both this and `owner` are empty, the token is scoped to the current repository only (least privilege).'
+    required: false
+    default: ''
+  owner:
+    description: 'Optional owner/org for the installation. Leave empty to scope to the current repository.'
+    required: false
+    default: ''
+  aws-region:
+    description: 'AWS region for SSM reads.'
+    required: false
+    default: 'us-west-2'
 outputs:
-  greeting:
-    description: 'The resulting greeting message'
-    value: ${{ steps.greet.outputs.greeting }}
+  token:
+    description: 'The minted GitHub App installation access token. Masked; never logged.'
+    value: ${{ steps.app-token.outputs.token }}
+  client-id:
+    description: 'The App client id (masked).'
+    value: ${{ steps.fetch-mask.outputs.client-id }}
 runs:
   using: 'composite'
   steps:
-    # Composite steps stay thin: real logic lives in scripts/ so it is
-    # unit-testable with bats. Replace this example step with your own.
-    - name: Greet
-      id: greet
+    # Precondition: the caller has already run aws-actions/configure-aws-credentials
+    # (OIDC). This step consumes ambient AWS credentials.
+    - name: Fetch + mask GitHub App credentials from SSM
+      id: fetch-mask
       shell: bash
-      run: "${GITHUB_ACTION_PATH}/scripts/greet.sh"
+      run: "${GITHUB_ACTION_PATH}/scripts/fetch-mask.sh"
       env:
-        INPUT_WHO_TO_GREET: ${{ inputs.who-to-greet }}
+        INPUT_APP: ${{ inputs.app }}
+        INPUT_AWS_REGION: ${{ inputs.aws-region }}
+
+    - name: Mint installation token
+      id: app-token
+      uses: actions/create-github-app-token@v3
+      with:
+        # SSM stores the App *client id* (Iv23…), so use client-id, not app-id.
+        client-id: ${{ steps.fetch-mask.outputs.client-id }}
+        private-key: ${{ steps.fetch-mask.outputs.private-key }}
+        owner: ${{ inputs.owner }}
+        repositories: ${{ inputs.repositories }}

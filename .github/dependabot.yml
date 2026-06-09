@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Composite actions have no npm/lockfile dependencies — only the GitHub Actions
+  # referenced in workflows and (transitively) action.yml need update tracking.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"

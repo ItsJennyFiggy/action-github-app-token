@@ -1,0 +1,20 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+# Calls the shared reusable release workflow. It runs in THIS repo's context
+# (secrets: inherit), mints a scoped GitHub App token from SSM, and drives
+# release-please. `release_type: simple` is used because a composite action has
+# no language package manifest to version — release-please tracks the version in
+# .release-please-manifest.json. Auto-merge of the release PR is gated inside the
+# reusable workflow on the AUTO_MERGE_RELEASE_PR repo variable.
+jobs:
+  release:
+    uses: ItsJennyFiggy/release-workflows/.github/workflows/release.yml@v1
+    with:
+      release_type: simple
+      update_major_tag: ${{ vars.UPDATE_MAJOR_TAG == 'true' }}
+    secrets: inherit

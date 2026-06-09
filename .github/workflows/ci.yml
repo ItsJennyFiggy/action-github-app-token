@@ -1,0 +1,50 @@
+name: Test Composite Action Template
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint and Test Action
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # 2. Lint shell scripts. shellcheck is preinstalled on ubuntu-latest,
+      #    so no third-party action is needed.
+      - name: Run ShellCheck
+        run: shellcheck scripts/*.sh
+
+      # 3. Install bats (not preinstalled on the runner).
+      - name: Set up bats
+        uses: bats-core/bats-action@4.0.0
+
+      # 4. Run bats unit tests
+      - name: Run bats Tests
+        run: bats tests/
+
+      # 5. Local integration test — run the composite action against itself.
+      - name: Run Local Integration Test
+        id: integration
+        uses: ./
+        with:
+          who-to-greet: 'GitHub Actions Integration'
+
+      # 6. Assert the action produced the expected output.
+      - name: Assert Action Output
+        run: |
+          if [ "${{ steps.integration.outputs.greeting }}" != "Hello, GitHub Actions Integration!" ]; then
+            echo "Unexpected greeting output: '${{ steps.integration.outputs.greeting }}'"
+            exit 1
+          fi

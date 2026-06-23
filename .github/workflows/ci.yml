@@ -19,7 +19,7 @@ jobs:
     steps:
       # 1. Checkout repository
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # 2. Lint shell scripts. shellcheck is preinstalled on ubuntu-latest.
       - name: Run ShellCheck

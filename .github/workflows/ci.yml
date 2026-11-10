@@ -27,7 +27,7 @@ jobs:
 
       # 3. Install bats (not preinstalled on the runner).
       - name: Set up bats
-        uses: bats-core/bats-action@4.0.0
+        uses: bats-core/bats-action@4.1.0
 
       # 4. Run bats unit tests (the aws CLI is mocked; no network/SSM is touched).
       - name: Run bats Tests
